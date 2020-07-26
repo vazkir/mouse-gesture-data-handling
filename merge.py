@@ -1,7 +1,6 @@
 import os, glob, time
 import pandas as pd
 
-data_path = '/Users/vascowerk/Harvard/DGMD/merge-mouse-data/data'
 
 def merge_gesture_by_index(data_path, gesture_name, index):
     data_files = glob.glob(os.path.join(data_path, f"{gesture_name}{index}_*.csv"))
@@ -11,10 +10,7 @@ def merge_gesture_by_index(data_path, gesture_name, index):
     for f in data_files:
         print(f"File merging -> {f}")
         df = pd.read_csv(f, sep=',', skiprows=4)
-
-        # Make sure rightly sorted
-        df = df.sort_values('HostTimestamp')
-
+        df = df.sort_values('HostTimestamp') # Make sure rightly sorted
         all_df.append(df)
 
     # Error checking
@@ -34,13 +30,16 @@ def merge_gesture_by_index(data_path, gesture_name, index):
     return df_merge_asof
 
 
-
 def merge_and_concat_gesture_types(gesture_name):
     print(f"merge_gesture_types called for -> {gesture_name}")
     all_movements_of_gesture = []
 
     for i in range(1, 16):
-        data_path_normal = data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
+        #Grab the input data path
+        input_data_path = os.getcwd() + '/input_data'
+
+        # Generate full path
+        data_path_normal = input_data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
         data_path_g = data_path_normal + '_g'
 
         # Get the data
@@ -64,12 +63,11 @@ def merge_and_concat_gesture_types(gesture_name):
     gesture_concatunated['move_type'] = gesture_id
 
     # Merge all items per gesture
-    gesture_concatunated.to_csv( f"output/gestures/all_{gesture_name}_merged.csv")
+    gesture_concatunated.to_csv( f"output_data/gestures/all_{gesture_name}_merged.csv")
 
     print(f"Amount of merged files: {len(all_movements_of_gesture)}")
 
     return gesture_concatunated
-
 
 
 def main():
@@ -93,7 +91,7 @@ def main():
     gesture_concatunated = pd.concat(all_merged_and_contact_data)
 
     # Merge all items per gesture
-    gesture_concatunated.to_csv( f"output/all_merged.csv")
+    gesture_concatunated.to_csv( f"output_data/all_merged.csv")
 
     # Stats
     column_amount = gesture_concatunated['HostTimestamp'].count()
@@ -103,75 +101,3 @@ def main():
 
 
 main()
-
-
-
-
-    # down_path = data_path + '/down_gestures/down_files'
-    # down_files = glob.glob(os.path.join(down_path, "down1_*.csv"))
-    #
-    # all_df = []
-    # for f in down_files:
-    #     print(f"File merging -> {f}")
-    #     df = pd.read_csv(f, sep=',')
-    #     df['file'] = f.split('/')[-1]
-    #     all_df.append(df)
-    #
-    # # df_merged = pd.concat(all_df, ignore_index=True, axis='columns').drop_duplicates().reset_index(drop=True)
-    # # df_merged.to_csv( "merged.csv")
-    #
-    # # df_merge_asof = reduce(lambda  left,right: pd.merge(left,right,on=['HostTimestamp'], how='outer'), all_df)
-    # # https://www.datacamp.com/community/tutorials/joining-dataframes-pandas
-    # df_merge_asof = pd.merge_asof(all_df[0], all_df[1],
-    #           on='HostTimestamp',
-    #           by='NodeName')
-    #
-    # df_merge_asof = pd.merge_asof(df_merge_asof, all_df[2],
-    #           on='HostTimestamp',
-    #           by='NodeName')
-    #
-    # df_merge_asof.to_csv( "merged.csv")
-
-    # down_path = data_path + '/down_gestures/down_files'
-    # down_files = glob.glob(os.path.join(down_path, "down1_*.csv"))
-    #
-    # all_df = []
-    # for f in down_files:
-    #     print(f"File-> {f}")
-    #     df = pd.read_csv(f, sep=',')
-    #     # f['file'] = f.split('/')[-1]
-    #     all_df.append(df)
-    #
-    # merged_df = pd.concat(all_df, ignore_index=True, sort=True)
-    #
-    # # df_merged = (pd.read_csv(f, sep=',') for f in down_files)
-    # # df_merged   = pd.concat(df_from_each_file, ignore_index=True)
-    # df_merged.to_csv( "merged.csv")
-
-
-
-
-
-
-
-
-
-# def main2():
-#     # From: https://stackoverflow.com/questions/14530748/combine-columns-from-several-csv-files-into-a-single-file
-#     down_path = data_path + '/down_gestures/down_files'
-#     down_files = glob.glob(os.path.join(down_path, "down1_*.csv"))
-#
-#     dfs = []
-#     for filename in down_files:
-#         # read the csv, making sure the first two columns are str
-#         df = pd.read_csv(filename, header=None, converters={0: str, 1: str})
-#         # throw away all but the first two columns
-#         df = df.ix[:,:1]
-#         # change the column names so they won't collide during concatenation
-#         df.columns = [filename + str(cname) for cname in df.columns]
-#         dfs.append(df)
-#
-#     # concatenate them horizontally
-#     merged = pd.concat(dfs,axis=1)
-#     # write it out
-#     merged.to_csv("merged.csv", header=None, index=None)
