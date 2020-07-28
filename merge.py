@@ -108,10 +108,6 @@ def main():
     # Track excecution time
     start_time = time.time()
 
-    # gestures = ['down']
-    gestures = ['down', 'left', 'right', 'up']
-    # gestures = ['down', 'left', 'right', 'spiral', 'up']
-
     all_merged_and_contact_data = []
 
     for gesture in gestures:
@@ -158,7 +154,12 @@ args = parser.parse_args()
 
 # Set global variable to use when the script runs
 include_single = args.su
+
+# Recorded movements for 1 person
 gesture_single = ['wave', 'spiral']
+
+# Recorded movements for 2 person recordings
+gestures = ['down', 'left', 'right', 'up']
 
 # Call the main function to start merging, contactunationg and cleaning the data
 main()
