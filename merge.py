@@ -1,5 +1,6 @@
 import os, glob, time
 import pandas as pd
+from sklearn.model_selection import train_test_split
 
 
 def merge_gesture_by_index(data_path, gesture_name, index):
@@ -62,12 +63,32 @@ def merge_and_concat_gesture_types(gesture_name):
     gesture_id = gesture_name[0].upper() # E.g. D, L, R
     gesture_concatunated['move_type'] = gesture_id
 
-    # Merge all items per gesture
+    # Save intermediate data to csv
     gesture_concatunated.to_csv( f"output_data/gestures/all_{gesture_name}_merged.csv")
 
     print(f"Amount of merged files: {len(all_movements_of_gesture)}")
 
     return gesture_concatunated
+
+
+def clean_data(raw_data_df):
+    # Clear empty rows
+    clean_df = raw_data_df.dropna()
+
+    # Drop irrelevant columns
+    clean_df = clean_df.drop(['Date_x', 'NodeName', 'RawData_x', 'Date_y',
+        'NodeTimestamp_y', 'RawData_y', 'Date', 'NodeTimestamp', 'RawData'],
+        axis=1)
+
+    # Rename columns
+    clean_df.index.name = "sr_no"
+    clean_df.rename(columns={'X (mg)': 'X_mg', 'Y (mg)': 'Y_mg', 'Z (mg)': 'Z_mg',
+        'X (mGa)': 'X_mGa','Y (mGa)': 'Y_mGa', 'Z (mGa)': 'Z_mGa',
+        'X (dps)': 'X_dps','Z (dps)': 'Z_dps', 'Z (dps)': 'Z_dps',
+        'NodeTimestamp_x': 'NodeTimestamp'},
+        inplace=True)
+
+    return clean_df
 
 
 def main():
@@ -88,13 +109,23 @@ def main():
         all_merged_and_contact_data.append(gesture_data)
 
     # Concactunate all data to 1 file
-    gesture_concatunated = pd.concat(all_merged_and_contact_data)
+    all_gestures_raw = pd.concat(all_merged_and_contact_data)
 
-    # Merge all items per gesture
-    gesture_concatunated.to_csv( f"output_data/all_merged.csv")
+    # Clear data set
+    all_gestures_clean = clean_data(all_gestures_raw)
+
+    # Save all the cleaned data to csv
+    all_gestures_clean.to_csv( f"output_data/all_merged.csv")
+
+    # Split the data into training and testing data sets 70/30
+    train_df, test_df = train_test_split(all_gestures_clean, test_size=0.3)
+
+    # Save test and train data
+    train_df.to_csv( f"output_data/train.csv")
+    test_df.to_csv( f"output_data/test.csv")
 
     # Stats
-    column_amount = gesture_concatunated['HostTimestamp'].count()
+    column_amount = all_gestures_clean['HostTimestamp'].count()
     time_elapsed = time.time() - start_time
 
     print(f"Merge done with {column_amount} data entries in {time_elapsed} seconds")
