@@ -1,4 +1,4 @@
-import os, glob, time
+import os, glob, time, argparse
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -39,17 +39,28 @@ def merge_and_concat_gesture_types(gesture_name):
         #Grab the input data path
         input_data_path = os.getcwd() + '/input_data'
 
-        # Generate full path
-        data_path_normal = input_data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
-        data_path_g = data_path_normal + '_g'
+        # Special case when only 1 person has mesured its data
+        if include_single and gesture_name in gesture_single:
+            print(f"Merging single data for -> {gesture_name}")
+            data_path_single = input_data_path + f'/{gesture_name}_gestures'
+            data_single = merge_gesture_by_index(data_path_single, gesture_name, i)
 
-        # Get the data
-        data_normal = merge_gesture_by_index(data_path_normal, gesture_name, i)
-        data_g = merge_gesture_by_index(data_path_g, gesture_name, i)
+            # Append data
+            all_movements_of_gesture.append(data_single)
 
-        # Append data
-        all_movements_of_gesture.append(data_normal)
-        all_movements_of_gesture.append(data_g)
+        # When to different datasets are available
+        else:
+            # Generate full path
+            data_path_normal = input_data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
+            data_path_g = data_path_normal + '_g'
+
+            # Get the data
+            data_normal = merge_gesture_by_index(data_path_normal, gesture_name, i)
+            data_g = merge_gesture_by_index(data_path_g, gesture_name, i)
+
+            # Append data
+            all_movements_of_gesture.append(data_normal)
+            all_movements_of_gesture.append(data_g)
 
     # Error checking
     if len(all_movements_of_gesture) < 2:
@@ -92,7 +103,7 @@ def clean_data(raw_data_df):
 
 
 def main():
-    print("Merge starting..")
+    print(f"Merge starting inlude su: {include_single}....")
 
     # Track excecution time
     start_time = time.time()
@@ -108,6 +119,13 @@ def main():
         gesture_data = merge_and_concat_gesture_types(gesture)
         all_merged_and_contact_data.append(gesture_data)
 
+    # Special case when only 1 person has mesured its data
+    if include_single:
+        for single_gesture in gesture_single:
+            # Runs merge and concatunation for 1 person's data files
+            gesture_data_single = merge_and_concat_gesture_types(single_gesture)
+            all_merged_and_contact_data.append(gesture_data_single)
+
     # Concactunate all data to 1 file
     all_gestures_raw = pd.concat(all_merged_and_contact_data)
 
@@ -115,14 +133,15 @@ def main():
     all_gestures_clean = clean_data(all_gestures_raw)
 
     # Save all the cleaned data to csv
-    all_gestures_clean.to_csv( f"output_data/all_merged.csv")
+    keyword_single = 'unbalanced' if include_single else 'all'
+    all_gestures_clean.to_csv( f"output_data/{keyword_single}_merged.csv")
 
     # Split the data into training and testing data sets 70/30
     train_df, test_df = train_test_split(all_gestures_clean, test_size=0.3)
 
     # Save test and train data
-    train_df.to_csv( f"output_data/train.csv")
-    test_df.to_csv( f"output_data/test.csv")
+    train_df.to_csv( f"output_data/{keyword_single}_train.csv")
+    test_df.to_csv( f"output_data/{keyword_single}_test.csv")
 
     # Stats
     column_amount = all_gestures_clean['HostTimestamp'].count()
@@ -131,4 +150,15 @@ def main():
     print(f"Merge done with {column_amount} data entries in {time_elapsed} seconds")
 
 
+# Add single flag which defaults to false if not added with the "store_true" for the action method
+# From: https://stackoverflow.com/a/8259080/8970591
+parser = argparse.ArgumentParser()
+parser.add_argument('-su', action='store_true', help="Include dataset from 1 person")
+args = parser.parse_args()
+
+# Set global variable to use when the script runs
+include_single = args.su
+gesture_single = ['wave', 'spiral']
+
+# Call the main function to start merging, contactunationg and cleaning the data
 main()
