@@ -109,22 +109,34 @@ def main():
     start_time = time.time()
 
     # To add the df's of all possible movements
-    all_merged_and_contact_data = []
-    single_merged_and_contact_data = []
+    all_gestures_clean = []
+
+    # Final test, train set
+    train_all_df = []
+    test_all_df = []
 
     for gesture in gestures:
         # Grabs both data measuresments normal and "g" and merges the data
         gesture_data = merge_and_concat_gesture_types(gesture)
-        all_merged_and_contact_data.append(gesture_data)
 
-    # Concactunate all data to 1 file
-    all_gestures_raw = pd.concat(all_merged_and_contact_data)
+        # Clear data set
+        gestures_clean = clean_data(gesture_data)
 
-    # Clear data set
-    all_gestures_clean = clean_data(all_gestures_raw)
+        # Split the data into training and testing data sets 70/30
+        train_regular_df, test_regular_df = train_test_split(gestures_clean, shuffle = False, test_size=0.3)
 
-    # Split the data into training and testing data sets 70/30
-    train_all_df, test_all_df = train_test_split(all_gestures_clean, shuffle = False, test_size=0.3)
+        # Append the seperate train and test data sets to the main ones.
+        # To maintain a 70/30 ratio per sequence
+        train_all_df = pd.concat([train_all_df, train_regular_df]) if len(train_all_df) > 0 else train_regular_df
+        test_all_df = pd.concat([test_all_df, test_regular_df]) if len(test_all_df) > 0 else test_regular_df
+        # test_all_df = pd.concat([test_all_df, test_regular_df])
+
+        # Concactunate to the main file for non-test train dataset, so all data points
+        # all_gestures_clean = pd.concat([all_gestures_clean, gestures_clean])
+        all_gestures_clean = pd.concat([all_gestures_clean, gestures_clean]) if len(all_gestures_clean) > 0 else gestures_clean
+
+        print(f"Done adding test and train regular for -> {gesture}")
+
 
     # Special case when only 1 person has mesured its data
     if include_single:
@@ -135,18 +147,20 @@ def main():
             # Clear data set
             single_gesture_clean = clean_data(gesture_data_single)
 
-            # Concactunate to the main file for non-test train dataset, so all data points
-            all_gestures_clean = pd.concat([all_gestures_clean, single_gesture_clean])
-
             # Split the data into training and testing data sets 70/30
             train_single_df, test_single_df = train_test_split(single_gesture_clean, shuffle = False, test_size=0.3)
 
             # Append the seperate train and test data sets to the main ones.
             # We do this after the main file has already been splittes because
             # Else our main data set could be very unbalnced since we only have half the data points for these
+            # print(f"{type(test_all_df)} -- {type(test_single_df)}")
             train_all_df = pd.concat([train_all_df, train_single_df])
             test_all_df = pd.concat([test_all_df, test_single_df])
+
+            # Concactunate to the main file for non-test train dataset, so all data points
+            all_gestures_clean = pd.concat([all_gestures_clean, single_gesture_clean])
             print(f"Done adding test and train single for -> {single_gesture}")
+
 
     # Save all the cleaned data to csv
     keyword_single = 'unbalanced' if include_single else 'all'
@@ -177,9 +191,6 @@ gesture_single = ['wave', 'spiral']
 
 # Recorded movements for 2 person recordings
 gestures = ['down', 'left', 'right', 'up']
-
-
-
 
 # Call the main function to start merging, contactunationg and cleaning the data
 main()
