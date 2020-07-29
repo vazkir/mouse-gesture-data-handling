@@ -124,7 +124,7 @@ def main():
     all_gestures_clean = clean_data(all_gestures_raw)
 
     # Split the data into training and testing data sets 70/30
-    train_all_df, test_all_df = train_test_split(all_gestures_clean, test_size=0.3)
+    train_all_df, test_all_df = train_test_split(all_gestures_clean, shuffle = False, test_size=0.3)
 
     # Special case when only 1 person has mesured its data
     if include_single:
@@ -139,7 +139,7 @@ def main():
             all_gestures_clean = pd.concat([all_gestures_clean, single_gesture_clean])
 
             # Split the data into training and testing data sets 70/30
-            train_single_df, test_single_df = train_test_split(single_gesture_clean, test_size=0.3)
+            train_single_df, test_single_df = train_test_split(single_gesture_clean, shuffle = False, test_size=0.3)
 
             # Append the seperate train and test data sets to the main ones.
             # We do this after the main file has already been splittes because
@@ -177,6 +177,9 @@ gesture_single = ['wave', 'spiral']
 
 # Recorded movements for 2 person recordings
 gestures = ['down', 'left', 'right', 'up']
+
+
+
 
 # Call the main function to start merging, contactunationg and cleaning the data
 main()
