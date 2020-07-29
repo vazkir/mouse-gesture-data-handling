@@ -1,7 +1,5 @@
 import os, glob, time, argparse
 import pandas as pd
-from sklearn.model_selection import train_test_split
-
 
 def merge_gesture_by_index(data_path, gesture_name, index):
     data_files = glob.glob(os.path.join(data_path, f"{gesture_name}{index}_*.csv"))
@@ -35,7 +33,7 @@ def merge_gesture_by_index(data_path, gesture_name, index):
     return df_merge_asof
 
 def merge_and_concat_gesture_types_single(gesture_name):
-    global train_all_df, test_all_df
+    global train_all_df, test_all_df, cutoff_test_train
     gesture_concatunated_reg = pd.DataFrame()
 
     for i in range(1, 16):
@@ -46,11 +44,11 @@ def merge_and_concat_gesture_types_single(gesture_name):
 
         # Append the seperate train and test data sets to the main ones.
         # To maintain a 80/20 ratio per sequence
-        if i > 12:
-            print(f"{i} -> train")
+        if i > cutoff_test_train:
+            print(f"{i} -> Single train")
             train_all_df = pd.concat([train_all_df, data_single])
         else:
-            print(f"{i} -> test")
+            print(f"{i} -> Single test")
             test_all_df = pd.concat([test_all_df, data_single])
 
         # Concat the single data
@@ -70,7 +68,7 @@ def merge_and_concat_gesture_types_single(gesture_name):
 
 
 def merge_and_concat_gesture_types(gesture_name):
-    global train_all_df, test_all_df
+    global train_all_df, test_all_df, cutoff_test_train
 
     gesture_concatunated_reg = pd.DataFrame()
     gesture_concatunated_g = pd.DataFrame()
@@ -87,12 +85,12 @@ def merge_and_concat_gesture_types(gesture_name):
 
         # Append the seperate train and test data sets to the main ones.
         # To maintain a 80/20 ratio per sequence
-        if i > 12:
-            print(f"{i} -> train")
+        if i > cutoff_test_train:
+            print(f"{i} -> Regular train")
             train_all_df = pd.concat([train_all_df, data_normal])
             train_all_df = pd.concat([train_all_df, data_g])
         else:
-            print(f"{i} -> test")
+            print(f"{i} -> Regular test")
             test_all_df = pd.concat([test_all_df, data_normal])
             test_all_df = pd.concat([test_all_df, data_g])
 
@@ -202,6 +200,9 @@ args = parser.parse_args()
 
 # Set global variable to use when the script runs
 include_single = args.su
+
+# Cutoff point train & test data, 12 of 15 is 80/20, 11 of 15 is 73/27
+cutoff_test_train = 11
 
 # Recorded movements for 1 person
 gesture_single = ['wave', 'spiral']
