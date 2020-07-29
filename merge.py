@@ -128,7 +128,7 @@ def clean_data(raw_data_df):
     clean_df.index.name = "sr_no"
     clean_df.rename(columns={'X (mg)': 'X_mg', 'Y (mg)': 'Y_mg', 'Z (mg)': 'Z_mg',
         'X (mGa)': 'X_mGa','Y (mGa)': 'Y_mGa', 'Z (mGa)': 'Z_mGa',
-        'X (dps)': 'X_dps','Z (dps)': 'Z_dps', 'Z (dps)': 'Z_dps',
+        'X (dps)': 'X_dps','Y (dps)': 'Y_dps', 'Z (dps)': 'Z_dps',
         'NodeTimestamp_x': 'NodeTimestamp'},
         inplace=True)
 

@@ -1,4 +1,4 @@
-sr_no,HostTimestamp,NodeTimestamp,X_mg,Y_mg,Z_mg,X_mGa,Y_mGa,Z_mGa,X_dps,Y (dps),Z_dps,move_type
+sr_no,HostTimestamp,NodeTimestamp,X_mg,Y_mg,Z_mg,X_mGa,Y_mGa,Z_mGa,X_dps,Y_dps,Z_dps,move_type
 2,53471,11563,-38,-518,870,234.0,-99.0,109.0,1.9,-0.4,2.3,S
 3,53471,11569,-30,-517,891,234.0,-99.0,109.0,1.9,-0.4,2.3,S
 4,53497,11575,-33,-516,884,229.0,-90.0,115.0,0.2,-0.4,1.8,S
