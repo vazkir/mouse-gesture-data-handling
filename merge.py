@@ -41,6 +41,14 @@ def merge_and_concat_gesture_types_single(gesture_name):
         data_path_single = input_data_path + f'/{gesture_name}_gestures'
         data_single = merge_gesture_by_index(data_path_single, gesture_name, i)
 
+        # Split the data into training and testing data sets 70/30
+        train_regular_df, test_regular_df = train_test_split(data_single, shuffle = False, test_size=0.2)
+
+        # Append the seperate train and test data sets to the main ones.
+        # To maintain a 80/20 ratio per sequence
+        train_all_df = pd.concat([train_all_df, train_regular_df])
+        test_all_df = pd.concat([test_all_df, test_regular_df])
+
         # Concat the single data
         gesture_concatunated_reg = pd.concat([gesture_concatunated_reg, data_single])
 
@@ -52,14 +60,6 @@ def merge_and_concat_gesture_types_single(gesture_name):
     # Add the column to differentiate between types
     gesture_id = gesture_name[0].upper() # E.g. D, L, R
     gesture_concatunated_reg['move_type'] = gesture_id
-
-    # Split the data into training and testing data sets 70/30
-    train_regular_df, test_regular_df = train_test_split(gesture_concatunated_reg, shuffle = False, test_size=0.2)
-
-    # Append the seperate train and test data sets to the main ones.
-    # To maintain a 80/20 ratio per sequence
-    train_all_df = pd.concat([train_all_df, train_regular_df])
-    test_all_df = pd.concat([test_all_df, test_regular_df])
 
     # Save intermediate data to csv
     gesture_concatunated_reg = clean_data(gesture_concatunated_reg)
@@ -85,6 +85,17 @@ def merge_and_concat_gesture_types(gesture_name):
         data_normal = merge_gesture_by_index(data_path_normal, gesture_name, i)
         data_g = merge_gesture_by_index(data_path_g, gesture_name, i)
 
+        # Split the data into training and testing data sets 70/30
+        train_regular_df, test_regular_df = train_test_split(data_normal, shuffle = False, test_size=0.2)
+        train_g_df, test_g_df = train_test_split(data_g, shuffle = False, test_size=0.2)
+
+        # Append the seperate train and test data sets to the main ones.
+        # To maintain a 80/20 ratio per sequence
+        train_all_df = pd.concat([train_all_df, train_regular_df])
+        test_all_df = pd.concat([test_all_df, test_regular_df])
+        train_all_df = pd.concat([train_all_df, train_g_df])
+        test_all_df = pd.concat([test_all_df, test_g_df])
+
         # Append data, concat is faster then append I believe
         # See: https://stackoverflow.com/a/15822811/8970591
         gesture_concatunated_reg = pd.concat([gesture_concatunated_reg, data_normal])
@@ -99,17 +110,6 @@ def merge_and_concat_gesture_types(gesture_name):
     gesture_id = gesture_name[0].upper() # E.g. D, L, R
     gesture_concatunated_reg['move_type'] = gesture_id
     gesture_concatunated_g['move_type'] = gesture_id
-
-    # Split the data into training and testing data sets 70/30
-    train_regular_df, test_regular_df = train_test_split(gesture_concatunated_reg, shuffle = False, test_size=0.2)
-    train_g_df, test_g_df = train_test_split(gesture_concatunated_g, shuffle = False, test_size=0.2)
-
-    # Append the seperate train and test data sets to the main ones.
-    # To maintain a 80/20 ratio per sequence
-    train_all_df = pd.concat([train_all_df, train_regular_df])
-    test_all_df = pd.concat([test_all_df, test_regular_df])
-    train_all_df = pd.concat([train_all_df, train_g_df])
-    test_all_df = pd.concat([test_all_df, test_g_df])
 
     # Concatunate all movement data for 1 gesture
     all_gestures_concatunated = pd.concat([gesture_concatunated_reg, gesture_concatunated_g])
