@@ -9,7 +9,7 @@ def merge_gesture_by_index(data_path, gesture_name, index):
     all_df = []
 
     for f in data_files:
-        print(f"File merging -> {f}")
+        # print(f"File merging -> {f}")
         df = pd.read_csv(f, sep=',', skiprows=4)
         df = df.sort_values('HostTimestamp') # Make sure rightly sorted
         all_df.append(df)
@@ -30,56 +30,96 @@ def merge_gesture_by_index(data_path, gesture_name, index):
 
     return df_merge_asof
 
+def merge_and_concat_gesture_types_single(gesture_name):
+    global train_all_df, test_all_df
 
-def merge_and_concat_gesture_types(gesture_name):
-    print(f"merge_gesture_types called for -> {gesture_name}")
-    all_movements_of_gesture = []
+    gesture_concatunated_reg = pd.DataFrame()
 
     for i in range(1, 16):
-        #Grab the input data path
+        # Grab the input data path & Generate full path
         input_data_path = os.getcwd() + '/input_data'
+        data_path_single = input_data_path + f'/{gesture_name}_gestures'
+        data_single = merge_gesture_by_index(data_path_single, gesture_name, i)
 
-        # Special case when only 1 person has mesured its data
-        if include_single and gesture_name in gesture_single:
-            print(f"Merging single data for -> {gesture_name}")
-            data_path_single = input_data_path + f'/{gesture_name}_gestures'
-            data_single = merge_gesture_by_index(data_path_single, gesture_name, i)
-
-            # Append data
-            all_movements_of_gesture.append(data_single)
-
-        # When to different datasets are available
-        else:
-            # Generate full path
-            data_path_normal = input_data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
-            data_path_g = data_path_normal + '_g'
-
-            # Get the data
-            data_normal = merge_gesture_by_index(data_path_normal, gesture_name, i)
-            data_g = merge_gesture_by_index(data_path_g, gesture_name, i)
-
-            # Append data
-            all_movements_of_gesture.append(data_normal)
-            all_movements_of_gesture.append(data_g)
+        # Concat the single data
+        gesture_concatunated_reg = pd.concat([gesture_concatunated_reg, data_single])
 
     # Error checking
-    if len(all_movements_of_gesture) < 2:
-        print(f"ERROR @ merge_and_concat_gesture_types - {gesture_name} -> all_movements_of_gesture count: {len(all_movements_of_gesture)} ")
+    if gesture_concatunated_reg.size < 100:
+        print(f"ERROR single @ merge_and_concat_gesture_types - {gesture_name} -> all_movements_of_gesture count: {gesture_concatunated_reg.size} ")
         exit()
-
-    # Concactunate all data for 1 movements
-    gesture_concatunated = pd.concat(all_movements_of_gesture)
 
     # Add the column to differentiate between types
     gesture_id = gesture_name[0].upper() # E.g. D, L, R
-    gesture_concatunated['move_type'] = gesture_id
+    gesture_concatunated_reg['move_type'] = gesture_id
+
+    # Split the data into training and testing data sets 70/30
+    train_regular_df, test_regular_df = train_test_split(gesture_concatunated_reg, shuffle = False, test_size=0.2)
+
+    # Append the seperate train and test data sets to the main ones.
+    # To maintain a 80/20 ratio per sequence
+    train_all_df = pd.concat([train_all_df, train_regular_df])
+    test_all_df = pd.concat([test_all_df, test_regular_df])
 
     # Save intermediate data to csv
-    gesture_concatunated.to_csv( f"output_data/gestures/all_{gesture_name}_merged.csv")
+    gesture_concatunated_reg = clean_data(gesture_concatunated_reg)
+    gesture_concatunated_reg.to_csv( f"output_data/gestures/all_{gesture_name}_merged.csv")
 
-    print(f"Amount of merged files: {len(all_movements_of_gesture)}")
+    print(f"Amount of merged files: {len(gesture_concatunated_reg)}")
+    return gesture_concatunated_reg
 
-    return gesture_concatunated
+
+def merge_and_concat_gesture_types(gesture_name):
+    global train_all_df, test_all_df
+
+    gesture_concatunated_reg = pd.DataFrame()
+    gesture_concatunated_g = pd.DataFrame()
+
+    for i in range(1, 16):
+        # Grab the input data path & Generate full paths
+        input_data_path = os.getcwd() + '/input_data'
+        data_path_normal = input_data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
+        data_path_g = data_path_normal + '_g'
+
+        # Get the data
+        data_normal = merge_gesture_by_index(data_path_normal, gesture_name, i)
+        data_g = merge_gesture_by_index(data_path_g, gesture_name, i)
+
+        # Append data, concat is faster then append I believe
+        # See: https://stackoverflow.com/a/15822811/8970591
+        gesture_concatunated_reg = pd.concat([gesture_concatunated_reg, data_normal])
+        gesture_concatunated_g = pd.concat([gesture_concatunated_g, data_g])
+
+    # Error checking
+    if gesture_concatunated_reg.size < 100 or gesture_concatunated_g.size < 100:
+        print(f"ERROR regular @ merge_and_concat_gesture_types - {gesture_name} -> regular count: {gesture_concatunated_reg.size} & g count: {gesture_concatunated_g.size} ")
+        exit()
+
+    # Add the column to differentiate between types
+    gesture_id = gesture_name[0].upper() # E.g. D, L, R
+    gesture_concatunated_reg['move_type'] = gesture_id
+    gesture_concatunated_g['move_type'] = gesture_id
+
+    # Split the data into training and testing data sets 70/30
+    train_regular_df, test_regular_df = train_test_split(gesture_concatunated_reg, shuffle = False, test_size=0.2)
+    train_g_df, test_g_df = train_test_split(gesture_concatunated_g, shuffle = False, test_size=0.2)
+
+    # Append the seperate train and test data sets to the main ones.
+    # To maintain a 80/20 ratio per sequence
+    train_all_df = pd.concat([train_all_df, train_regular_df])
+    test_all_df = pd.concat([test_all_df, test_regular_df])
+    train_all_df = pd.concat([train_all_df, train_g_df])
+    test_all_df = pd.concat([test_all_df, test_g_df])
+
+    # Concatunate all movement data for 1 gesture
+    all_gestures_concatunated = pd.concat([gesture_concatunated_reg, gesture_concatunated_g])
+
+    # Save intermediate data to csv
+    all_gestures_clean = clean_data(all_gestures_concatunated)
+    all_gestures_clean.to_csv( f"output_data/gestures/all_{gesture_name}_merged.csv")
+
+    print(f"Amount of merged files: {len(all_gestures_concatunated)}")
+    return all_gestures_clean
 
 
 def clean_data(raw_data_df):
@@ -103,64 +143,41 @@ def clean_data(raw_data_df):
 
 
 def main():
-    print(f"Merge starting inlude su: {include_single}....")
+    global train_all_df, test_all_df
+    print(f"Merge starting inlude su: {include_single}.... \n")
 
     # Track excecution time
     start_time = time.time()
 
     # To add the df's of all possible movements
-    all_gestures_clean = []
-
-    # Final test, train set
-    train_all_df = []
-    test_all_df = []
+    all_gestures_clean = pd.DataFrame()
 
     for gesture in gestures:
+        print(f"---- Start merging data for -> {gesture} ------")
+
         # Grabs both data measuresments normal and "g" and merges the data
-        gesture_data = merge_and_concat_gesture_types(gesture)
-
-        # Clear data set
-        gestures_clean = clean_data(gesture_data)
-
-        # Split the data into training and testing data sets 70/30
-        train_regular_df, test_regular_df = train_test_split(gestures_clean, shuffle = False, test_size=0.3)
-
-        # Append the seperate train and test data sets to the main ones.
-        # To maintain a 70/30 ratio per sequence
-        train_all_df = pd.concat([train_all_df, train_regular_df]) if len(train_all_df) > 0 else train_regular_df
-        test_all_df = pd.concat([test_all_df, test_regular_df]) if len(test_all_df) > 0 else test_regular_df
-        # test_all_df = pd.concat([test_all_df, test_regular_df])
+        gesture_data_clean = merge_and_concat_gesture_types(gesture)
 
         # Concactunate to the main file for non-test train dataset, so all data points
-        # all_gestures_clean = pd.concat([all_gestures_clean, gestures_clean])
-        all_gestures_clean = pd.concat([all_gestures_clean, gestures_clean]) if len(all_gestures_clean) > 0 else gestures_clean
+        all_gestures_clean = pd.concat([all_gestures_clean, gesture_data_clean])
 
-        print(f"Done adding test and train regular for -> {gesture}")
-
+        print(f"Done adding test and train regular for -> {gesture} \n")
 
     # Special case when only 1 person has mesured its data
     if include_single:
         for single_gesture in gesture_single:
+            print(f"---- Start merging single data for -> {gesture} ------")
+
             # Runs merge and concatunation for 1 person's data files
-            gesture_data_single = merge_and_concat_gesture_types(single_gesture)
-
-            # Clear data set
-            single_gesture_clean = clean_data(gesture_data_single)
-
-            # Split the data into training and testing data sets 70/30
-            train_single_df, test_single_df = train_test_split(single_gesture_clean, shuffle = False, test_size=0.3)
-
-            # Append the seperate train and test data sets to the main ones.
-            # We do this after the main file has already been splittes because
-            # Else our main data set could be very unbalnced since we only have half the data points for these
-            # print(f"{type(test_all_df)} -- {type(test_single_df)}")
-            train_all_df = pd.concat([train_all_df, train_single_df])
-            test_all_df = pd.concat([test_all_df, test_single_df])
+            single_gesture_clean = merge_and_concat_gesture_types_single(single_gesture)
 
             # Concactunate to the main file for non-test train dataset, so all data points
             all_gestures_clean = pd.concat([all_gestures_clean, single_gesture_clean])
-            print(f"Done adding test and train single for -> {single_gesture}")
+            print(f"Done adding test and train single for -> {single_gesture} \n")
 
+    # Clean all train and test data
+    train_all_df = clean_data(train_all_df)
+    test_all_df = clean_data(test_all_df)
 
     # Save all the cleaned data to csv
     keyword_single = 'unbalanced' if include_single else 'all'
@@ -172,10 +189,15 @@ def main():
 
     # Stats
     data_rows_amount = all_gestures_clean.size
+    data_train_amount = train_all_df.size
+    data_test_amount = test_all_df.size
+    ratio_train = data_train_amount / (data_train_amount + data_test_amount)
+    ratio_test = 1 - ratio_train
     time_elapsed = time.time() - start_time
-
-    print(f"Merge done with {data_rows_amount} data entries in {time_elapsed} seconds")
-
+    print(f"---- Stats ------")
+    print(f"Merge done with {data_rows_amount} data entries")
+    print(f"Split: train amount: {data_train_amount} ({'{:.1%}'.format(ratio_train)}) & test amount: {data_test_amount} ({'{:.1%}'.format(ratio_test)})")
+    print(f"The merge took in {time_elapsed} seconds")
 
 # Add single flag which defaults to false if not added with the "store_true" for the action method
 # From: https://stackoverflow.com/a/8259080/8970591
@@ -191,6 +213,10 @@ gesture_single = ['wave', 'spiral']
 
 # Recorded movements for 2 person recordings
 gestures = ['down', 'left', 'right', 'up']
+
+# Final test, train set
+train_all_df = pd.DataFrame()
+test_all_df = pd.DataFrame()
 
 # Call the main function to start merging, contactunationg and cleaning the data
 main()
