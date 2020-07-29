@@ -108,19 +108,14 @@ def main():
     # Track excecution time
     start_time = time.time()
 
+    # To add the df's of all possible movements
     all_merged_and_contact_data = []
+    single_merged_and_contact_data = []
 
     for gesture in gestures:
         # Grabs both data measuresments normal and "g" and merges the data
         gesture_data = merge_and_concat_gesture_types(gesture)
         all_merged_and_contact_data.append(gesture_data)
-
-    # Special case when only 1 person has mesured its data
-    if include_single:
-        for single_gesture in gesture_single:
-            # Runs merge and concatunation for 1 person's data files
-            gesture_data_single = merge_and_concat_gesture_types(single_gesture)
-            all_merged_and_contact_data.append(gesture_data_single)
 
     # Concactunate all data to 1 file
     all_gestures_raw = pd.concat(all_merged_and_contact_data)
@@ -128,22 +123,44 @@ def main():
     # Clear data set
     all_gestures_clean = clean_data(all_gestures_raw)
 
+    # Split the data into training and testing data sets 70/30
+    train_all_df, test_all_df = train_test_split(all_gestures_clean, test_size=0.3)
+
+    # Special case when only 1 person has mesured its data
+    if include_single:
+        for single_gesture in gesture_single:
+            # Runs merge and concatunation for 1 person's data files
+            gesture_data_single = merge_and_concat_gesture_types(single_gesture)
+
+            # Clear data set
+            single_gesture_clean = clean_data(gesture_data_single)
+
+            # Concactunate to the main file for non-test train dataset, so all data points
+            all_gestures_clean = pd.concat([all_gestures_clean, single_gesture_clean])
+
+            # Split the data into training and testing data sets 70/30
+            train_single_df, test_single_df = train_test_split(single_gesture_clean, test_size=0.3)
+
+            # Append the seperate train and test data sets to the main ones.
+            # We do this after the main file has already been splittes because
+            # Else our main data set could be very unbalnced since we only have half the data points for these
+            train_all_df = pd.concat([train_all_df, train_single_df])
+            test_all_df = pd.concat([test_all_df, test_single_df])
+            print(f"Done adding test and train single for -> {single_gesture}")
+
     # Save all the cleaned data to csv
     keyword_single = 'unbalanced' if include_single else 'all'
     all_gestures_clean.to_csv( f"output_data/{keyword_single}_merged.csv")
 
-    # Split the data into training and testing data sets 70/30
-    train_df, test_df = train_test_split(all_gestures_clean, test_size=0.3)
-
     # Save test and train data
-    train_df.to_csv( f"output_data/{keyword_single}_train.csv")
-    test_df.to_csv( f"output_data/{keyword_single}_test.csv")
+    train_all_df.to_csv( f"output_data/{keyword_single}_train.csv")
+    test_all_df.to_csv( f"output_data/{keyword_single}_test.csv")
 
     # Stats
-    column_amount = all_gestures_clean['HostTimestamp'].count()
+    data_rows_amount = all_gestures_clean.size
     time_elapsed = time.time() - start_time
 
-    print(f"Merge done with {column_amount} data entries in {time_elapsed} seconds")
+    print(f"Merge done with {data_rows_amount} data entries in {time_elapsed} seconds")
 
 
 # Add single flag which defaults to false if not added with the "store_true" for the action method
