@@ -8,7 +8,7 @@ def merge_gesture_by_index(data_path, gesture_name, index):
 
     for f in data_files:
         # print(f"File merging -> {f}")
-        df = pd.read_csv(f, sep=',', skiprows=4)
+        df = pd.read_csv(f, sep=',', skiprows=4, warn_bad_lines=True, )
         df = df.sort_values('HostTimestamp') # Make sure rightly sorted
         all_df.append(df)
 
@@ -205,10 +205,10 @@ include_single = args.su
 cutoff_test_train = 11
 
 # Recorded movements for 1 person
-gesture_single = ['wave', 'spiral']
+gesture_single = []
 
 # Recorded movements for 2 person recordings
-gestures = ['down', 'left', 'right', 'up']
+gestures = ['down', 'left', 'right', 'up', 'wave', 'spiral']
 
 # Final test, train set
 train_all_df = pd.DataFrame()
