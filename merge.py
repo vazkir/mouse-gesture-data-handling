@@ -55,8 +55,8 @@ def merge_and_concat_gesture_types_single(gesture_name):
         gesture_concatunated_reg = pd.concat([gesture_concatunated_reg, data_single])
 
     # Error checking
-    if gesture_concatunated_reg.size < 100:
-        print(f"ERROR single @ merge_and_concat_gesture_types - {gesture_name} -> all_movements_of_gesture count: {gesture_concatunated_reg.size} ")
+    if len(gesture_concatunated_reg) < 5:
+        print(f"ERROR single @ merge_and_concat_gesture_types - {gesture_name} -> all_movements_of_gesture count: {len(gesture_concatunated_reg)} ")
         exit()
 
     # Save intermediate data to csv
@@ -100,8 +100,8 @@ def merge_and_concat_gesture_types(gesture_name):
         gesture_concatunated_g = pd.concat([gesture_concatunated_g, data_g])
 
     # Error checking
-    if gesture_concatunated_reg.size < 100 or gesture_concatunated_g.size < 100:
-        print(f"ERROR regular @ merge_and_concat_gesture_types - {gesture_name} -> regular count: {gesture_concatunated_reg.size} & g count: {gesture_concatunated_g.size} ")
+    if len(gesture_concatunated_reg) < 5 or len(gesture_concatunated_g) < 5:
+        print(f"ERROR regular @ merge_and_concat_gesture_types - {gesture_name} -> regular count: {len(gesture_concatunated_reg)} & g count: {len(gesture_concatunated_g)} ")
         exit()
 
     # Concatunate all movement data for 1 gesture
