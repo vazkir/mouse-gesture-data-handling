@@ -45,11 +45,11 @@ def merge_and_concat_gesture_types_single(gesture_name):
         # Append the seperate train and test data sets to the main ones.
         # To maintain a 80/20 ratio per sequence
         if i > cutoff_test_train:
-            print(f"{i} -> Single train")
-            train_all_df = pd.concat([train_all_df, data_single])
-        else:
             print(f"{i} -> Single test")
             test_all_df = pd.concat([test_all_df, data_single])
+        else:
+            print(f"{i} -> Single train")
+            train_all_df = pd.concat([train_all_df, data_single])
 
         # Concat the single data
         gesture_concatunated_reg = pd.concat([gesture_concatunated_reg, data_single])
@@ -86,13 +86,13 @@ def merge_and_concat_gesture_types(gesture_name):
         # Append the seperate train and test data sets to the main ones.
         # To maintain a 80/20 ratio per sequence
         if i > cutoff_test_train:
-            print(f"{i} -> Regular train")
-            train_all_df = pd.concat([train_all_df, data_normal])
-            train_all_df = pd.concat([train_all_df, data_g])
-        else:
             print(f"{i} -> Regular test")
             test_all_df = pd.concat([test_all_df, data_normal])
             test_all_df = pd.concat([test_all_df, data_g])
+        else:
+            print(f"{i} -> Regular train")
+            train_all_df = pd.concat([train_all_df, data_normal])
+            train_all_df = pd.concat([train_all_df, data_g])
 
         # Append data, concat is faster then append I believe
         # See: https://stackoverflow.com/a/15822811/8970591
@@ -182,8 +182,8 @@ def main():
 
     # Stats
     data_rows_amount = all_gestures_clean.size
-    data_train_amount = train_all_df.size
-    data_test_amount = test_all_df.size
+    data_train_amount = len(train_all_df)
+    data_test_amount = len(test_all_df)
     ratio_train = data_train_amount / (data_train_amount + data_test_amount)
     ratio_test = 1 - ratio_train
     time_elapsed = time.time() - start_time
