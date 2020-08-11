@@ -79,7 +79,7 @@ def merge_and_concat_gesture_types(gesture_name):
         data_path_normal = input_data_path + f'/{gesture_name}_gestures/{gesture_name}_files'
         data_path_g = data_path_normal + '_g'
 
-        # Get the data
+        # Get and merge each seperate movement's sensor recordings
         data_normal = merge_gesture_by_index(data_path_normal, gesture_name, i)
         data_g = merge_gesture_by_index(data_path_g, gesture_name, i)
 
@@ -134,6 +134,13 @@ def clean_data(raw_data_df):
 
     return clean_df
 
+# Custom test train data withouth magnetometer for web
+def clean_custom_web(df):
+    # Drop irrelevant columns
+    clean_df = df.drop(['X_mGa', 'Y_mGa', 'Z_mGa', 'NodeTimestamp'],
+        axis=1)
+
+    return clean_df
 
 def main():
     global train_all_df, test_all_df
@@ -180,8 +187,17 @@ def main():
     train_all_df.to_csv( f"output_data/{keyword_single}_train.csv")
     test_all_df.to_csv( f"output_data/{keyword_single}_test.csv")
 
+    if include_custom_web:
+        # Clean all train and test data
+        train_all_web_df = clean_custom_web(train_all_df)
+        test_all_web_df = clean_custom_web(test_all_df)
+
+        # Save test and train data
+        train_all_web_df.to_csv( f"output_data/{keyword_single}_web_train.csv")
+        test_all_web_df.to_csv( f"output_data/{keyword_single}_web_test.csv")
+
     # Stats
-    data_rows_amount = all_gestures_clean.size
+    data_rows_amount = len(all_gestures_clean)
     data_train_amount = len(train_all_df)
     data_test_amount = len(test_all_df)
     ratio_train = data_train_amount / (data_train_amount + data_test_amount)
@@ -196,10 +212,12 @@ def main():
 # From: https://stackoverflow.com/a/8259080/8970591
 parser = argparse.ArgumentParser()
 parser.add_argument('-su', action='store_true', help="Include dataset from 1 person")
+parser.add_argument('-web', action='store_true', help="Include custom web dataset (no magnetometer)")
 args = parser.parse_args()
 
 # Set global variable to use when the script runs
 include_single = args.su
+include_custom_web = args.web
 
 # Cutoff point train & test data, 12 of 15 is 80/20, 11 of 15 is 73/27
 cutoff_test_train = 11
