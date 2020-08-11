@@ -137,7 +137,7 @@ def clean_data(raw_data_df):
 # Custom test train data withouth magnetometer for web
 def clean_custom_web(df):
     # Drop irrelevant columns
-    clean_df = df.drop(['X_mGa', 'Y_mGa', 'Z_mGa', 'NodeTimestamp'],
+    clean_df = df.drop(['X_mGa', 'Y_mGa', 'Z_mGa'],
         axis=1)
 
     return clean_df
@@ -154,6 +154,10 @@ def main():
 
     for gesture in gestures:
         print(f"---- Start merging data for -> {gesture} ------")
+
+        # # Needs to be skipped for web for better precision
+        # if gesture == 'wave' and include_custom_web == True:
+        #     continue
 
         # Grabs both data measuresments normal and "g" and merges the data
         gesture_data_clean = merge_and_concat_gesture_types(gesture)
